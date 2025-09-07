@@ -1,4 +1,4 @@
-#ifndef clox_vm_h
+#ifndef clox_vm_h                               // to prevent redundant/cyclical includes
 #define clox_vm_h
 
 #include "chunk.h"
