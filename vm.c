@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "common.h"
+#include "compiler.h"
 #include "debug.h"
 #include "vm.h"
 
@@ -77,9 +78,11 @@ static InterpretResult run() {
 
 }
 
-InterpretResult interpret(Chunk* chunk) {
-    vm.chunk = chunk;
-    vm.ip = vm.chunk->code;   // instruction pointer, points to the instruction about to be executed.
-    return run();             // what will actually run the bytecode instructions
+InterpretResult interpret(const char* source) {
+    compile(source);
+    return INTERPRET_OK;
+    //vm.chunk = chunk;
+    //vm.ip = vm.chunk->code;   // instruction pointer, points to the instruction about to be executed.
+    //return run();             // what will actually run the bytecode instructions
                               // bob knows how gcc optimizes stuff, and builds his code around that.
 }

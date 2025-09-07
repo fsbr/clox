@@ -22,7 +22,7 @@ typedef enum {          // jayko has nothing equivalent to this
 void initVM();
 void freeVM();          // okay i'm kind of getting use to this pattern
 
-InterpretResult interpret(Chunk* chunk);
+InterpretResult interpret(const char* source);
 
 void push(Value value);
 Value pop();
