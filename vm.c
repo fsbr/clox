@@ -7,7 +7,7 @@
 VM vm;
 
 static void resetStack() {
-    vm.stackTop = vm.stack;
+    vm.stackTop = vm.stack;   // since pointers are just addresses this is possible
 }
 
 void initVM() {

@@ -6,7 +6,8 @@
 typedef double Value;       // Nystrom only supports floats in ch14.
 
 // why does nystrom like specific data structures?
-typedef struct {
+// ValueArray is the constant pool
+typedef struct {                                    
     int capacity;
     int count;
     Value* values;
