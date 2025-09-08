@@ -4,7 +4,7 @@
 #include "compiler.h"
 #include "scanner.h"
 
-void compile(const char* source) {
+bool compile(const char* source) {
     initScanner(source);
     int line = -1;
     for (;;) {

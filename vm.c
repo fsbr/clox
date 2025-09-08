@@ -79,8 +79,23 @@ static InterpretResult run() {
 }
 
 InterpretResult interpret(const char* source) {
-    compile(source);
-    return INTERPRET_OK;
+    // beginning of ch 17:
+    Chunk chunk;
+    initChunk(&chunk);
+
+    if (!compile(source, &chunk)) {
+        freeChunk(&chunk);
+        return INTERPRET_COMPILE_ERROR;
+    }
+
+    vm.chunk = &chunk;
+    vm.ip = vm.chunk->code;
+    InterpretResult result = run();
+
+    freeChunk(&chunk);
+    return result;
+    //compile(source);
+    //return INTERPRET_OK;
     //vm.chunk = chunk;
     //vm.ip = vm.chunk->code;   // instruction pointer, points to the instruction about to be executed.
     //return run();             // what will actually run the bytecode instructions
