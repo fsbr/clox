@@ -208,6 +208,7 @@ static void unary() {
 
 // hopefully the gods forgive me for copy pasting this from the book 
 // instead of manually typing it like I have been doing with the rest.
+// This is similar to how "typeclasses" would have implemented it.
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE}, // nud, led, rbp
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
