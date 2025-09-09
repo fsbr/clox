@@ -27,5 +27,5 @@ void freeValueArray(ValueArray* array) {
 }
 
 void printValue(Value value) {
-    printf("%g", value);            // converts a floating-point # to decimal or decimal exponent
+    printf("%g", AS_NUMBER(value));            // converts a floating-point # to decimal or decimal exponent
 }

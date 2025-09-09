@@ -190,7 +190,7 @@ static void grouping() {
 
 static void number() {
     double value = strtod(parser.previous.start, NULL); // we only accept floats rn lmao
-    emitConstant(value);
+    emitConstant(NUMBER_VAL(value));
 }
 
 static void unary() {
