@@ -14,6 +14,12 @@ typedef struct {
 
 Parser parser;                                  // remember for a "real" language this is bad. 
 
+Chunk* compilingChunk;
+
+static Chunk* currentChunk() {                  // this is like where im stuck on jayko.
+    return compilingChunk;
+}
+
 static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
@@ -60,15 +66,34 @@ static void consume(TokenType type, const char* message) { // in jayko i think w
     errorAtCurrent(message);
 }
 
+static void emitByte(uint8_t byte) {
+    writeChunk(currentChunk(), byte, parser.previous.line); // TYPING parser.previous.line here because the author put it here is one thing but acutally implementing it is like damn.
+}
+
+static void emitBytes(uint8_t byte1, uint8_t byte2) { 
+    emitByte(byte1);            // it is often the case that we have an opcode byte1, and an operand
+    emitByte(byte2);            // byte2, so this function is to help with that.
+}
+
+static void emitReturn() {
+    emitByte(OP_RETURN);
+}
+
+static void endCompiler() {
+    emitReturn();
+}
+
+
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
-
+    compilingChunk = chunk;
     parser.hadError = false;
     parser.panicMode = false;
     
     advance();          // "primes the pump" what
     expression();       // i am intimidated by this chapter because pratt parsing is hard!
     consume(TOKEN_EOF, "EXPECT END OF EXPRESSION"); // even tho parsing an compiling are used interchangeably in this book IDT that means they are necessarily the same thing
+    endCompiler();
     return !parser.hadError;
 
 
