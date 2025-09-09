@@ -12,6 +12,21 @@ typedef struct {
     bool panicMode;
 } Parser;
 
+// in jayko we had it as attributes on the tokens, which sucked.
+typedef enum {                  
+    PREC_NONE,                      // LOWEST PRECEDENCE
+    PREC_ASSIGNMENT, // =
+    PREC_OR,         // or
+    PREC_AND,        // and
+    PREC_EQUALITY,   // == != 
+    PREC_COMPARISON, // < > <= >=
+    PREC_TERM,       // + -
+    PREC_FACTOR,     // * /
+    PREC_UNARY,      // ! -
+    PREC_CALL,       // . ()
+    PREC_PRIMARY,    //             // HIGHEST PRECEDENCE
+} Precedence;
+
 Parser parser;                                  // remember for a "real" language this is bad. 
 
 Chunk* compilingChunk;
@@ -79,9 +94,63 @@ static void emitReturn() {
     emitByte(OP_RETURN);
 }
 
+static uint8_t makeConstant(Value value) {
+    int constant = addConstant(currentChunk(), value);
+    if (constant > UINT8_MAX){
+        error("Too many constants in one chunk.");           // it returns the count from the dynamic array
+        return 0;       // OP_CONSTANT has an operand, and that operand is the index into the chunk
+    }
+
+    return (uint8_t)constant;
+}
+
+static void emitConstant(Value value) {
+    emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
 static void endCompiler() {
     emitReturn();
 }
+
+static void parsePrecedence(Precedence precedence) {
+    // what goes here
+}
+
+// this was the hardest part of jayko
+// should provide pratt parsing logic for the folloiwng four things:
+// Number Literals: 123
+// Parentheses for grouping (123)
+// Unary negation: -123
+// +,-,*,/
+static void expression(){
+    parsePrecedence(PREC_ASSIGNMENT);
+}
+
+static void grouping() {
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+}
+
+static void number() {
+    double value = strtod(parser.previous.start, NULL); // we only accept floats rn lmao
+    emitConstant(value);
+}
+
+static void unary() {
+    parsePrecedence(PREC_UNARY);
+    TokenType operatorType = parser.previous.type;
+
+    // compile the operand.
+    expression();
+
+    // Emit the operator instruction
+    switch (operatorType) {
+        case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+        default: return; // Unreachable.
+    }
+}
+
+
 
 
 bool compile(const char* source, Chunk* chunk) {
