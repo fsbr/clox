@@ -5,6 +5,7 @@
 #include "compiler.h"
 #include "scanner.h"
 
+
 typedef struct {
     Token current;
     Token previous;
@@ -27,9 +28,19 @@ typedef enum {
     PREC_PRIMARY,    //             // HIGHEST PRECEDENCE
 } Precedence;
 
+typedef void (*ParseFn)();
+
+typedef struct {
+    ParseFn prefix;             // the nud()
+    ParseFn infix;              // the led()
+    Precedence precedence;      // the right binding power
+} ParseRule;
+
+
 Parser parser;                                  // remember for a "real" language this is bad. 
 
 Chunk* compilingChunk;
+
 
 static Chunk* currentChunk() {                  // this is like where im stuck on jayko.
     return compilingChunk;
@@ -110,11 +121,57 @@ static void emitConstant(Value value) {
 
 static void endCompiler() {
     emitReturn();
+#ifdef DEBUG_PRINT_CODE
+    if (!parser.hadError) {
+        disassembleChunk(currentChunk(), "code");
+    }
+#endif
+}
+
+
+// I just spent 30 minutes looking for ways to reorder my code, when really I just 
+// needed to put the function prototypes at the correct location
+// which would have been told to me if I had read ahead just 1 code block.
+static void expression();
+static ParseRule* getRule(TokenType type);
+static void parsePrecedence(Precedence precedence);
+
+
+
+static void binary() {
+    TokenType operatorType = parser.previous.type;
+    ParseRule* rule = getRule(operatorType);
+    parsePrecedence( (Precedence)(rule->precedence + 1));
+
+    switch (operatorType) {
+        case TOKEN_PLUS:        emitByte(OP_ADD);           break;
+        case TOKEN_MINUS:       emitByte(OP_SUBTRACT);      break;
+        case TOKEN_STAR:        emitByte(OP_MULTIPLY);      break;
+        case TOKEN_SLASH:       emitByte(OP_DIVIDE);        break;
+        default: return;    // Unreachable
+    }
+
+
 }
 
 static void parsePrecedence(Precedence precedence) {
-    // what goes here
+    advance();
+    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
+    if (prefixRule == NULL) {
+        error("[prefix parsing] Expect expression.");
+        return;
+    }
+    prefixRule();
+    while (precedence <= getRule(parser.current.type)->precedence) {
+        advance();
+        ParseFn infixRule = getRule(parser.previous.type)->infix;
+        infixRule();
+    }
+
+
 }
+
+
 
 // this was the hardest part of jayko
 // should provide pratt parsing logic for the folloiwng four things:
@@ -137,11 +194,10 @@ static void number() {
 }
 
 static void unary() {
-    parsePrecedence(PREC_UNARY);
     TokenType operatorType = parser.previous.type;
 
     // compile the operand.
-    expression();
+    parsePrecedence(PREC_UNARY);
 
     // Emit the operator instruction
     switch (operatorType) {
@@ -150,7 +206,56 @@ static void unary() {
     }
 }
 
+// hopefully the gods forgive me for copy pasting this from the book 
+// instead of manually typing it like I have been doing with the rest.
+ParseRule rules[] = {
+  [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE}, // nud, led, rbp
+  [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, 
+  [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
+  [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
+  [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_BANG]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_GREATER]       = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_GREATER_EQUAL] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LESS]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
+  [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FALSE]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_NIL]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_TRUE]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+};
 
+
+
+static ParseRule* getRule(TokenType type) {
+    return &rules[type];
+}
 
 
 bool compile(const char* source, Chunk* chunk) {
@@ -161,7 +266,7 @@ bool compile(const char* source, Chunk* chunk) {
     
     advance();          // "primes the pump" what
     expression();       // i am intimidated by this chapter because pratt parsing is hard!
-    consume(TOKEN_EOF, "EXPECT END OF EXPRESSION"); // even tho parsing an compiling are used interchangeably in this book IDT that means they are necessarily the same thing
+    //consume(TOKEN_EOF, "EXPECT END OF EXPRESSION"); // even tho parsing an compiling are used interchangeably in this book IDT that means they are necessarily the same thing
     endCompiler();
     return !parser.hadError;
 
