@@ -32,8 +32,9 @@ typedef struct {
 
 // side note i love that you can just type cast and {a, b } to declare into a struct
 // place the correct value into the Value typedef stcut
+
 #define BOOL_VAL(value) ((Value){VAL_BOOL, {.boolean = value}})
-#define NIL_VAL(value) ((Value){VAL_NIL, {.number = 0}})
+#define NIL_VAL ((Value){VAL_NIL, {.number = 0}})
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number= value}})
 
 
@@ -45,6 +46,8 @@ typedef struct {
     Value* values;
 
 } ValueArray;
+
+bool valuesEqual(Value a, Value b);
 
 void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
