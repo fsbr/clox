@@ -8,6 +8,7 @@ typedef enum {
     VAL_BOOL,
     VAL_NIL,
     VAL_NUMBER,
+    VAL_OBJ
 } ValueType;
 
 
@@ -16,13 +17,15 @@ typedef struct {
     union {
         bool boolean;
         double number;
+        Obj* obj;
     } as;                   // you read it as "type as bool" or "type as "double"
 } Value;
 
 // Type checking
-#define IS_BOOL(value) ((value).type == VAL_BOOL)
-#define IS_NIL(value) ((value).type == VAL_NIL)
-#define IS_NUMBER(value) ((value).type == VAL_NUMBER)
+#define IS_BOOL(value)      ((value).type == VAL_BOOL)
+#define IS_NIL(value)       ((value).type == VAL_NIL)
+#define IS_NUMBER(value)    ((value).type == VAL_NUMBER)
+#define IS_OBJ(value)       ((value).type == VAL_OBJ)
 
 
 // these macros access into the value typedef struct
@@ -36,6 +39,7 @@ typedef struct {
 #define BOOL_VAL(value) ((Value){VAL_BOOL, {.boolean = value}})
 #define NIL_VAL ((Value){VAL_NIL, {.number = 0}})
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number= value}})
+#define OBJ_VAL(object) ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 
 // why does nystrom like specific data structures?
