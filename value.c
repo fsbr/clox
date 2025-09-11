@@ -43,15 +43,9 @@ bool valuesEqual(Value a, Value b) {
     if (a.type != b.type) return false;
     switch (a.type) {
         case VAL_BOOL:      return AS_BOOL(a) == AS_BOOL(b);
-        case VAL_NIL:       return true;                            // bc you're first checking on the type, nil is safe to return true after
-        case VAL_NUMBER:      return AS_NUMBER(a) == AS_NUMBER(b); // if the types are the same we look at the value
-        case VAL_OBJ: {
-            ObjString* aString = AS_STRING(a);
-            ObjString* bString = AS_STRING(b);
-            return aString->length == bString->length &&
-                memcmp(aString->chars, bString->chars,
-                       aString->length) == 0;
-        }
+        case VAL_NIL:       return true;                                // bc you're first checking on the type, nil is safe to return true after
+        case VAL_NUMBER:    return AS_NUMBER(a) == AS_NUMBER(b);        // if the types are the same we look at the value
+        case VAL_OBJ:       return AS_OBJ(a) == AS_OBJ(b);          
         default:            return false;       // Unreachable
     }
 }

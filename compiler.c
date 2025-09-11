@@ -92,6 +92,17 @@ static void consume(TokenType type, const char* message) { // in jayko i think w
     errorAtCurrent(message);
 }
 
+static bool check(TokenType type) {
+    // check if the current token has the given type
+    return parser.current.type == type;
+}
+
+static bool match(TokenType type) {
+    if (!check(type)) return false;
+    advance();
+    return true;
+}
+
 static void emitByte(uint8_t byte) {
     writeChunk(currentChunk(), byte, parser.previous.line); // TYPING parser.previous.line here because the author put it here is one thing but acutally implementing it is like damn.
 }
@@ -133,6 +144,8 @@ static void endCompiler() {
 // needed to put the function prototypes at the correct location
 // which would have been told to me if I had read ahead just 1 code block.
 static void expression();
+static void statement();
+static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
@@ -199,6 +212,33 @@ static void parsePrecedence(Precedence precedence) {
 static void expression(){
     parsePrecedence(PREC_ASSIGNMENT);
 }
+
+static void printStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    emitByte(OP_PRINT);
+}
+
+static void expressionStatement() {
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+    emitByte(OP_POP);
+}
+
+// in lox, declarations are something even bigger than statements()
+static void declaration() {
+    statement();
+}
+
+static void statement() {
+    if (match(TOKEN_PRINT)) {
+        printStatement();
+    } else {
+        expressionStatement();
+    }
+
+}
+
 
 static void grouping() {
     expression();
@@ -292,26 +332,16 @@ bool compile(const char* source, Chunk* chunk) {
     parser.panicMode = false;
     
     advance();          // "primes the pump" what
-    expression();       // i am intimidated by this chapter because pratt parsing is hard!
+
+    while (!match(TOKEN_EOF)) {
+        declaration();
+    }
+
+
+    //expression();       // i am intimidated by this chapter because pratt parsing is hard!
     //consume(TOKEN_EOF, "EXPECT END OF EXPRESSION"); // even tho parsing an compiling are used interchangeably in this book IDT that means they are necessarily the same thing
     endCompiler();
     return !parser.hadError;
-
-
-
-    //int line = -1;
-    //for (;;) {
-    //    Token token = scanToken();
-    //    if (token.line != line) {
-    //        printf("%4d ", token.line);
-    //        line = token.line;
-    //    } else {
-    //        printf("   | ");
-    //    }
-    //    printf("%2d '%.*s'\n", token.type, token.length, token.start);
-
-    //    if (token.type == TOKEN_EOF) break;
-    //}
 }
 
 
