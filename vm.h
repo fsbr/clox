@@ -11,6 +11,7 @@ typedef struct{
     uint8_t* ip;                // it is faster to dereference a pointer than look up an element in an array by index
     Value stack[STACK_MAX];     // The stack sized is fixed right now, but in theory we could make it a dynamic array
     Value* stackTop;            // IMPORTANT: the stack pointer points to one element ABOVE where the last item is.
+    Obj* objects;               // pointer to the head of the list of objects
 } VM;
 
 typedef enum {                  // jayko has nothing equivalent to this
@@ -19,6 +20,8 @@ typedef enum {                  // jayko has nothing equivalent to this
     INTERPRET_RUNTIME_ERROR     // we detect a runtime error
 } InterpretResult;
 
+
+extern VM vm;                   // expose the vm globally (extern keyword)
 
 // Function prototypes
 void initVM();          // initialize and free memory dedicated to the VM

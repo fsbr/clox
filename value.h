@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+typedef struct Obj Obj;
+typedef struct ObjString ObjString;
+
 // Value types that have built in support from the VM are separate from classes.
 typedef enum {
     VAL_BOOL,
@@ -30,8 +33,9 @@ typedef struct {
 
 // these macros access into the value typedef struct
 // Take the value in the struct back to "C" from "clox".  I guess..
-#define AS_BOOL(value) ((value).as.boolean)
-#define AS_NUMBER(value) ((value).as.number)
+#define AS_OBJ(value)       ((value).as.obj)
+#define AS_BOOL(value)      ((value).as.boolean)
+#define AS_NUMBER(value)    ((value).as.number)
 
 // side note i love that you can just type cast and {a, b } to declare into a struct
 // place the correct value into the Value typedef stcut
