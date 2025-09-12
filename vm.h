@@ -12,6 +12,7 @@ typedef struct{
     uint8_t* ip;                // it is faster to dereference a pointer than look up an element in an array by index
     Value stack[STACK_MAX];     // The stack sized is fixed right now, but in theory we could make it a dynamic array
     Value* stackTop;            // IMPORTANT: the stack pointer points to one element ABOVE where the last item is.
+    Table globals;
     Table strings;
     Obj* objects;               // pointer to the head of the list of objects
 } VM;
