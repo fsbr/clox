@@ -36,6 +36,12 @@ typedef struct {
     Precedence precedence;      // the right binding power
 } ParseRule;
 
+typdef struct {
+    Local locals[UINT8_COUNT];
+    int localCount;
+    int scopeDepth;
+} Compiler;
+
 
 Parser parser;                                  // remember for a "real" language this is bad. 
 
