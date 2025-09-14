@@ -36,7 +36,12 @@ typedef struct {
     Precedence precedence;      // the right binding power
 } ParseRule;
 
-typdef struct {
+typedef struct {
+    Token name;                     // the name of the variable
+    int depth;                      // the scope depth. 0 is global scope. 1 is first block etc
+} Local;
+
+typedef struct {
     Local locals[UINT8_COUNT];
     int localCount;
     int scopeDepth;
@@ -44,7 +49,7 @@ typdef struct {
 
 
 Parser parser;                                  // remember for a "real" language this is bad. 
-
+Compiler* current = NULL;                       // breaks concurrency.  idk why though
 Chunk* compilingChunk;
 
 
@@ -136,6 +141,12 @@ static void emitConstant(Value value) {
     emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+static void initCompiler(Compiler* compiler) {
+    compiler->localCount = 0;
+    compiler->scopeDepth = 0;
+    current = compiler;
+}
+
 static void endCompiler() {
     emitReturn();
 #ifdef DEBUG_PRINT_CODE
@@ -145,6 +156,13 @@ static void endCompiler() {
 #endif
 }
 
+static void beginScope() {
+    current->scopeDepth++;
+}
+
+static void endScope() {
+    current->scopeDepth--;
+}
 
 // I just spent 30 minutes looking for ways to reorder my code, when really I just 
 // needed to put the function prototypes at the correct location
@@ -237,6 +255,13 @@ static void expression(){
     parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void block() {
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        declaration();
+    }
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+}
+
 
 static void varDeclaration() {
     uint8_t global = parseVariable("Expect variable name.");
@@ -302,6 +327,10 @@ static void declaration() {
 static void statement() {
     if (match(TOKEN_PRINT)) {
         printStatement();
+    } else if (match(TOKEN_LEFT_BRACE)) {
+        beginScope();
+        block();
+        endScope();
     } else {
         expressionStatement();
     }
@@ -409,6 +438,8 @@ static ParseRule* getRule(TokenType type) {
 
 bool compile(const char* source, Chunk* chunk) {
     initScanner(source);
+    Compiler compiler;
+    initCompiler(&compiler);
     compilingChunk = chunk;
     parser.hadError = false;
     parser.panicMode = false;
