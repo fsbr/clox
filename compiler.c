@@ -151,7 +151,7 @@ static void emitConstant(Value value) {
 
 static void patchJump(int offset) {
     // -2 to adjust for the bytecode for the jump offset itself
-    int jump = currentChunk()->count - offset - 2;
+    int jump = currentChunk()->count - offset - 2;  // this -2 is the difficulty of implementing it ourselves, which eventually we want to do
 
     if (jump > UINT16_MAX) {
         error("Too much code to jump over");
@@ -386,9 +386,16 @@ static void ifStatement() {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after 'if'.");
 
     int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
     statement();
     
+    int elseJump = emitJump(OP_JUMP);
+
     patchJump(thenJump);
+    emitByte(OP_POP);
+
+    if (match(TOKEN_ELSE)) statement();
+    patchJump(elseJump);
 }
 
 
