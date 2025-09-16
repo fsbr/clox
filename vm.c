@@ -61,8 +61,10 @@ static Value peek(int distance) {
 }
 
 // I've already forgotten how this function works haha
+// me a few days later: it returns TRUE if the value is FASLEY so don't get it twisted
 static bool isFalsey(Value value) {
-    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+    //if ( IS_NUMBER(value) && AS_NUMBER(value) == 0) { return true; } //&& (NUMBER_VAL(value) == 0) ) return false;
+    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value)); 
 }
 
 static void concatenate() {
@@ -218,12 +220,19 @@ static InterpretResult run() {
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
                 if (isFalsey(peek(0))) vm.ip += offset;
+
+                printf("isFalsey = %d", isFalsey(peek(0)));
                 break;
 
                 // To implement this with no (if-else)
                 // uint16_t offset = READ_SHORT();
                 // vm.ip += falsey() * offset;
                 // break;
+            }
+            case OP_LOOP: {
+                uint16_t offset = READ_SHORT();
+                vm.ip -= offset;
+                break;
             }
             case OP_RETURN: {
                 return INTERPRET_OK;
