@@ -42,7 +42,15 @@ typedef struct {
     int depth;                      // the scope depth. 0 is global scope. 1 is first block etc
 } Local;
 
+typedef enum {
+    TYPE_FUNCTION,
+    TYPE_SCRIPT
+} FunctionType;
+
 typedef struct {
+    ObjFunction* function;
+    FunctionType type;
+
     Local locals[UINT8_COUNT];
     int localCount;
     int scopeDepth;
